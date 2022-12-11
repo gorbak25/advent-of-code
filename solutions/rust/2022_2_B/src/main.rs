@@ -4,7 +4,6 @@ fn main() {
     println!("{}",
         support::test_data!()
         .split("\n")
-        .filter(|&x| !x.is_empty())
         .fold(0, |acc, x| {
                 let wins = [2, 0, 1];
                 let mut s = x.split(' ');

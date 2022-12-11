@@ -2,7 +2,7 @@ extern crate support;
 use itertools::sorted;
 
 fn main() {
-    println!("{:?}",
+    println!("{}",
         sorted(
         support::test_data!()
         .split("\n\n")

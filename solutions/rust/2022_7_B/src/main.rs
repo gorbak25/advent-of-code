@@ -24,20 +24,22 @@ impl Dir {
         }))
     }
 
-    fn add_child(parent: Rc<RefCell<Self>>, child: Rc<RefCell<Self>>) {
-        (*parent.borrow_mut()).childs.push(child.clone());
-        (*child.borrow_mut()).parent = Some(Rc::downgrade(&parent))
+    fn add_child(rc_parent: Rc<RefCell<Self>>, rc_child: Rc<RefCell<Self>>) {
+        let mut parent = rc_parent.borrow_mut();
+        let mut child = rc_child.borrow_mut();
+        parent.childs.push(rc_child.clone());
+        child.parent = Some(Rc::downgrade(&rc_parent))
     }
 
     fn total_size(node: Rc<RefCell<Self>>) -> usize {
-        if (*node.clone().borrow_mut()).total_size.is_some() {
-            (*node.clone().borrow_mut()).total_size.unwrap()
+        let mut node = node.borrow_mut();
+        if node.total_size.is_some() {
+            node.total_size.unwrap()
         } else {
-            let s = (*node.clone().borrow_mut()).file_sizes;
-            let c = (*node.clone().borrow_mut()).childs.iter().map(|c| Dir::total_size(c.clone())).sum::<usize>();
+            let s = node.file_sizes;
+            let c = node.childs.iter().map(|c| Dir::total_size(c.clone())).sum::<usize>();
 
-            (*node.clone().borrow_mut()).total_size = 
-                Some(s + c);
+            node.total_size = Some(s + c);
             s + c
         }
     }
@@ -45,9 +47,10 @@ impl Dir {
     // Find the smallest directory above the target value
     fn find_smallest_above(node: Rc<RefCell<Self>>, target: usize) -> Option<usize> {
         let s = Dir::total_size(node.clone());
+        let node = node.borrow();
         if s >= target {
             Some(
-                (*node.clone().borrow_mut()).childs.iter()
+                node.childs.iter()
                 .map(|c| Dir::find_smallest_above(c.clone(), target))
                 .fold(s, |acc, x| match x {
                     Some(x) => cmp::min(acc, x),
@@ -102,7 +105,7 @@ fn main() {
         match cmd {
             Command::ChangeDirectory("..") => {
                 assert!(dir.is_some());
-                dir = Some((*dir.unwrap().borrow()).parent.as_ref().unwrap().clone().upgrade().unwrap());
+                dir = Some(dir.unwrap().borrow().parent.as_ref().unwrap().upgrade().unwrap());
             }
             Command::ChangeDirectory(_dir) => {
             },

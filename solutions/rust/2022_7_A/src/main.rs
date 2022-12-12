@@ -3,18 +3,16 @@ use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 
 #[derive(Debug)]
-struct Dir<'a> {
-    name: &'a str,
+struct Dir {
     file_sizes: usize,
     total_size: Option<usize>,
-    childs: Vec<Rc<RefCell<Dir<'a>>>>,
-    parent: Option<Weak<RefCell<Dir<'a>>>>
+    childs: Vec<Rc<RefCell<Dir>>>,
+    parent: Option<Weak<RefCell<Dir>>>
 }
 
-impl<'a> Dir<'a> {
-    fn from_listing(name: &'a str, listing: Vec<ListResult<'a>>) -> Rc<RefCell<Self>> {
+impl Dir {
+    fn from_listing<'a>(listing: Vec<ListResult<'a>>) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self { 
-            name, 
             total_size: None,
             parent: None,
             childs: vec![], 
@@ -25,33 +23,37 @@ impl<'a> Dir<'a> {
         }))
     }
 
-    fn add_child(parent: Rc<RefCell<Self>>, child: Rc<RefCell<Self>>) {
-        (*parent.borrow_mut()).childs.push(child.clone());
-        (*child.borrow_mut()).parent = Some(Rc::downgrade(&parent))
+    fn add_child(rc_parent: Rc<RefCell<Self>>, rc_child: Rc<RefCell<Self>>) {
+        let mut parent = rc_parent.borrow_mut();
+        let mut child = rc_child.borrow_mut();
+        parent.childs.push(rc_child.clone());
+        child.parent = Some(Rc::downgrade(&rc_parent))
     }
 
     fn total_size(node: Rc<RefCell<Self>>) -> usize {
-        if (*node.clone().borrow_mut()).total_size.is_some() {
-            (*node.clone().borrow_mut()).total_size.unwrap()
+        let mut node = node.borrow_mut();
+        if node.total_size.is_some() {
+            node.total_size.unwrap()
         } else {
-            let s = (*node.clone().borrow_mut()).file_sizes;
-            let c = (*node.clone().borrow_mut()).childs.iter().map(|c| Dir::total_size(c.clone())).sum::<usize>();
+            let s = node.file_sizes;
+            let c = node.childs.iter().map(|c| Dir::total_size(c.clone())).sum::<usize>();
 
-            (*node.clone().borrow_mut()).total_size = 
-                Some(s + c);
+            node.total_size = Some(s + c);
             s + c
         }
     }
 
     fn task(node: Rc<RefCell<Self>>) -> usize {
         let s = Dir::total_size(node.clone());
-        let c = (*node.clone().borrow_mut()).childs.iter().map(|c| Dir::task(c.clone())).sum::<usize>();
+        let node = node.borrow();
+        let c = node.childs.iter().map(|c| Dir::task(c.clone())).sum::<usize>();
         if s < 100000 {
             s + c
         } else {
             c
         }
     }
+
 }
 
 #[derive(Debug)]
@@ -89,23 +91,18 @@ fn main() {
     })
     .collect::<Vec<Command>>();
 
-    let mut pwd: Option<&str> = None;
     let mut root: Option<Rc<RefCell<Dir>>> = None;
     let mut dir: Option<Rc<RefCell<Dir>>> = None;
     for cmd in commands {
         match cmd {
             Command::ChangeDirectory("..") => {
                 assert!(dir.is_some());
-                dir = Some((*dir.unwrap().borrow()).parent.as_ref().unwrap().clone().upgrade().unwrap());
-                pwd = None
+                dir = Some(dir.unwrap().borrow().parent.as_ref().unwrap().upgrade().unwrap());
             }
-            Command::ChangeDirectory(dir) => {
-                assert!(pwd.is_none());
-                pwd = Some(dir)
+            Command::ChangeDirectory(_dir) => {
             },
             Command::ListDirectory(listing) => {
-                assert!(pwd.is_some());
-                let tmp = Dir::from_listing(pwd.unwrap(), listing);
+                let tmp = Dir::from_listing(listing);
                 match dir {
                     Some(dir) => Dir::add_child(dir, tmp.clone()),
                     None => ()
@@ -115,9 +112,10 @@ fn main() {
                 if root.is_none() {
                     root = dir.clone();
                 }
-                pwd = None
             }
         }
     };
-    println!("{}", Dir::task(root.unwrap()))
+    println!("{}", 
+            Dir::task(root.clone().unwrap())
+        )
 }

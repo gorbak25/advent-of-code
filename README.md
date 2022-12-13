@@ -29,4 +29,4 @@ This repository contains solutions to Advent of Code in various programming lang
 | 2022 |  8  |   A  |  ✅  |
 | 2022 |  8  |   B  |  ✅  |
 | 2022 |  9  |   A  |  ✅  |
-| 2022 |  9  |   B  |      |
+| 2022 |  9  |   B  |  ✅  |

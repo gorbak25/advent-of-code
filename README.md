@@ -10,8 +10,8 @@ This repository contains solutions to Advent of Code in various programming lang
 
 ## Progress
 
-| Year | Day | Part | Rust |
-| ---- | --- | ---- | ---- |
+| Year |  Day | Part | Rust |
+| ---- | ---- | ---- | ---- |
 | 2022 |   1  |   A  |  ✅  |
 | 2022 |   1  |   B  |  ✅  |
 | 2022 |   2  |   A  |  ✅  |
@@ -32,3 +32,5 @@ This repository contains solutions to Advent of Code in various programming lang
 | 2022 |   9  |   B  |  ✅  |
 | 2022 |  10  |   A  |  ✅  |
 | 2022 |  10  |   B  |  ✅  |
+| 2022 |  11  |   A  |  ✅  |
+| 2022 |  11  |   B  |  ✅  |
